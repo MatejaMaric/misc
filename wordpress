@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Setup LEMP stack before this.
+
+# MariaDB
+	CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+	GRANT ALL ON wordpress.* TO 'wpuser'@'localhost' IDENTIFIED BY 'WP_DB_PASSWORD';
+	FLUSH PRIVILEGES;
+	EXIT;
+
+# WordPress
+# Download and set up WordPress
+cd /tmp
+curl -LO https://wordpress.org/latest.tar.gz
+tar xzvf latest.tar.gz
+cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
+
+#WP-CONFIG
+# Salts
+curl -s https://api.wordpress.org/secret-key/1.1/salt/ >> wp-config.php
+# DB connect
+define('DB_NAME', 'wordpress');
+define('DB_USER', 'wpuser');
+define('DB_PASSWORD', 'WP_DB_PASSWORD');
+define('FS_METHOD', 'direct');
+
+# Copy wp to www
+cp -a /tmp/wordpress/. /var/www/example.com
+chown -R www-data:www-data /var/www/example.com
+
+#END
+systemctl restart nginx

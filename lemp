@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+# Secure SSHD
+# ssh-copy-id user@hostname
+# PasswordAuth no
+
+# Update server
+apt update
+apt upgrade
+
+#Setting up firewall
+ufw default deny incoming
+ufw default allow outgoing
+ufw default deny routed
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw enable
+systemctl enable --now ufw
+
+# Installing necessary packages
+apt install ufw curl
+apt install nginx mariadb-server php-fpm php-mysql
+apt install php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
+apt install python3-certbot-nginx
+
+systemctl restart php7.3-fpm.service
+
+# Setting up Nginx
+mkdir -p /var/www/example.com
+
+cat > /etc/nginx/sites-available/example.com << EOF
+server {
+    listen 80;
+    listen [::]:80;
+
+    root /var/www/example.com;
+    index index.php index.html index.htm;
+
+    server_name example.com;
+
+    location = /favicon.ico { log_not_found off; access_log off; }
+    location = /robots.txt { log_not_found off; access_log off; allow all; }
+
+    location ~* \.(gif|jpeg|jpg|png)$ {
+    	expires max;
+    	log_not_found off;
+    }
+
+    location / {
+    	# try_files $uri $uri/ =404;
+    	try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+    }
+}
+EOF
+## Test Nginx config with nginx -t
+cat > /var/www/example.com/index.php << EOF
+<?php
+phpinfo();
+?>
+EOF
+ln -s /etc/nginx/sites-available/example.com /etc/nginx/sites-enabled/
+systemctl restart nginx
+
+# HTTPS
+certbot --nginx -d example.com
+systemctl restart nginx
+
+# MariaDB
+mysql_secure_installation

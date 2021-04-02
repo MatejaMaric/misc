@@ -1,0 +1,33 @@
+git init
+git add .
+git commit -m 'Initial commit'
+git remote add origin link-to-repo
+git push origin master
+git branch --set-upstream-to=origin/master master
+
+git branch new-branch
+git switch new-branch
+git switch master
+git merge new-branch
+
+git pull -> git fetch && git merge origin/master
+
+git fetch --dry-run?
+git remote show origin
+git remote update ~= git fetch --all
+git status -uno?
+
+git fetch
+git diff master origin/master
+
+git branch -a #list branches
+git branch -d branch-to-delete
+
+git log
+git show <commit-id>
+
+git checkout old-commit
+git checkout master
+
+# Pushing to non-bare repo (apply to repo that need to recive update)
+git config --local receive.denyCurrentBranch updateInstead

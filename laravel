@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+composer global require laravel/installer
+laravel new blog
+# OR
+composer create-project --prefer-dist laravel/laravel blog
+
+cd blog
+sudo chown -R $USER:www-data storage
+sudo chown -R $USER:www-data bootstrap/cache
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
+#chmod -R g+w storage
+#chmod -R g+w bootstrap/cache
+cp .env.example .env
+php artisan key:generate

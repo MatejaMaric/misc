@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+#grub> set root=(usb0)
+#grub> linux /parabola/boot/x86_64/vmlinuz append parabolaisobasedir=parabola parabolaisolabel=PARA_202001
+#grub> initrd /parabola/boot/x86_64/parabolaiso.img
+#grub> boot
+#
+#AUTOMATIC ISOLINUX RECOGNISED
+
+#Check internet
+ping parabola.nu
+
+vim /etc/pacman.conf #comment nonsystemd!
+vim /etc/pacman.d/mirrorlist
+
+pacman -Sy archlinux-keyring archlinuxarm-keyring parabola-keyring
+pacman-key --refresh-keys
+
+#Format hard drive
+#Three partition needed: root home swap
+fdisk -l
+#wipefs --all /dev/sda
+fdisk /dev/sda
+
+#Format partitions
+mkfs.ext4 /dev/sdaX
+mkfs.ext4 /dev/sdaY
+
+#Set swap
+mkswap /dev/sdaZ
+swapon /dev/sdaZ
+
+#Mount partitions
+mount /dev/sdaX /mnt
+mkdir /mnt/home
+mount /dev/sdaY /mnt/home
+
+#Check time - important because of the timestamps on gpg keys
+timedatectl set-ntp true
+timedatectl status
+
+#Set time if necessary
+date MMDDhhmmYYYY.ss
+
+#USE OPENRC ISO INSTEAD-----------------------------------------------------
+#Very old iso :(
+pacman -Sy archlinuxarm-keyring parabola-keyring
+pacman-key --populate archlinux archlinux32 archlinuxarm parabola
+pacman-key --refresh-keys
+wget https://pkgbuild.com/~eschwartz/repo/x86_64-extracted/pacman-static
+chmod +x pacman-static
+./pacman-static -S libarchive
+pacman -Sy archlinux-keyring
+pacman-key --populate archlinux archlinux32 archlinuxarm parabola
+pacman-key --refresh-keys
+pacman -Sy archlinux32-keyring
+pacman-key --populate archlinux archlinux32 archlinuxarm parabola
+pacman-key --refresh-keys
+
+#Doesn't do anything useful
+pacman -U https://www.parabola.nu/packages/core/i686/archlinux32-keyring-transition/download/
+#----------------------------------------------------------------------------
+
+#Install system
+#pacman unsubscribe from nonsystemd
+pacstrap /mnt base base-devel
+pacstrap /mnt linux-libre linux-libre-lts linux-libre-firmware
+pacstrap /mnt networkmanager
+pacstrap /mnt parabola-base
+pacstrap /mnt grub
+
+#Generate fstab file
+genfstab -U /mnt >> /mnt/etc/fstab
+
+#Chroot to newly build system
+arch-chroot /mnt {/bin/bash}
+
+#Set timezone
+ln -sf /usr/share/zoneinfo/Region/City /etc/localtime
+hwclock --systohc
+
+#Generate locale
+sed -i "s/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/" /etc/locale.gen
+locale-gen
+
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+echo "KEYMAP=us" > /etc/vconsole.conf
+
+#Set hostname
+echo "myhostname" > /etc/hostname
+
+#Network configuration
+cat > /etc/hosts << EOF
+127.0.0.1	localhost
+::1		localhost
+127.0.1.1	myhostname.localdomain	myhostname
+EOF
+
+systemctl enable NetworkManager
+
+#YOU WILL NEED TO REMOVE LINUX KERNAL AND MKINITCPIO PRESETS AND THEN REINSTALL KERNAL - EMPTY MKINITCPIO PRESET
+#Generate boot disk
+mkinitcpio -p linux-libre-lts
+
+#Install bootloader
+grub-install /dev/sda
+grub-mkconfig -o /boot/grub/grub.cfg
+
+#Set root password
+passwd
+
+#Set new user and give him root privileges
+useradd -mg users -G wheel {-s /bin/bash} username
+passwd username
+visudo
+	%wheel ALL=(ALL) ALL
+
+#Exit chroot
+exit
+
+#Unmount partitions
+umount -R /mnt
+
+#Boot to new system
+reboot
+
+#--------------------------------------------------------------------------------
+#buzzing
+sudo su
+pacman -S powertop
+
+cat > /etc/systemd/system/powertop.service << EOF
+[Unit]
+Description=Powertop tunings
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/bin/powertop --auto-tune
+Environment="TERM=xterm"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable --now powertop
+
+nmtui [OR]
+nmcli device wifi list
+nmcli device wifi connect SSID password PASSWORD

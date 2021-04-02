@@ -1,0 +1,6 @@
+https://www.youtube.com/results?search_query=some+search+query
+https://www.youtube.com/watch?v=video-id
+-e get name only (no download)
+youtube-dl -se --get-id "ytsearch5:your search"
+-x extract audio
+-o '%(title)s.%(ext)s'

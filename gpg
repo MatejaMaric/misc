@@ -1,0 +1,15 @@
+gpg -k
+gpg -K
+
+gpg --verify gnupg-2.2.21.tar.bz2.sig gnupg-2.2.21.tar.bz2
+
+gpg --edit-key 0x12345678
+gpg> key 0
+gpg> expire
+gpg> key 1
+gpg> expire
+gpg> save
+
+gpg --armor --export mail@example.com > example-key.asc
+gpg --output public.pgp --armor --export username@email
+gpg --output private.pgp --armor --export-secret-key username@email

@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+#Check if it is UEFI
+ls /sys/firmware/efi/efivars
+
+#WIFI
+wifi-menu
+#OR
+#ip link set wlan0 up
+wpa_passphrase NETWORK_SSID >> /etc/wpa_supplicant.conf
+NETWORK_PASSWORD
+wpa_supplicant -B -D wext -i wlan0 -c /etc/wpa_supplicant.conf
+dhclient wlan0
+
+#Check internet
+ping archlinux.org
+
+#Check time - not important
+timedatectl set-ntp true
+timedatectl status
+
+#Set mirrors
+pacman -Syy
+pacman -S reflector
+reflector -c "Germany" -f 12 -l 10 -n 12 --save /etc/pacman.d/mirrorlist
+reflector --verbose --latest 10 --sort rate
+
+#Format hard drive
+#Four partition needed: efi root home swap
+fdisk -l
+cgdisk /dev/sda
+
+#Format partitions
+mkfs.vfat /dev/sdaW
+mkfs.ext4 /dev/sdaX
+mkfs.ext4 /dev/sdaY
+
+#Set swap
+mkswap /dev/sdaZ
+swapon /dev/sdaZ
+
+#Mount partitions
+mount /dev/sdaX /mnt
+mkdir /mnt/home
+mount /dev/sdaY /mnt/home
+mkdir -p /mnt/boot/efi
+mount /dev/sdaW mnt/boot/efi
+
+#Install system
+pacstrap /mnt base base-devel linux linux-firmware
+
+#Generate fstab file
+genfstab -U /mnt >> /mnt/etc/fstab
+
+#Chroot to newly build system
+arch-chroot /mnt {/bin/bash}
+
+#Set timezone
+ln -sf /usr/share/zoneinfo/Region/City /etc/localtime
+hwclock --systohc
+
+#Generate locale
+sed -i "s/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/" /etc/locale.gen
+locale-gen
+
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+echo "KEYMAP=us" > /etc/vconsole.conf
+
+#Set hostname
+echo "myhostname" > /etc/hostname
+
+#Network configuration
+cat > /etc/hosts << EOF
+127.0.0.1 localhost
+::1       localhost
+127.0.1.1 myhostname.localdomain	myhostname
+EOF
+
+systemctl enable dhcpcd
+
+#Install bootloader
+pacman -S grub efibootmgr os-prober
+#os-prober ? Problems in chroot
+grub-install --target=x86_64-efi  --bootloader-id=GRUB --efi-directory=/boot/efi
+grub-mkconfig -o /boot/grub/grub.cfg
+
+#Probably unneeded----------------------------------------------
+mkdir /boot/efi/EFI/BOOT
+cp /boot/efi/EFI/GRUB/grubx64.efi /boot/efi/EFI/BOOT/BOOTX64.EFI
+nano /boot/efi/startup.nsh
+	bcf boot add 1 fs0:\EFI\GRUB\grubx64.efi "My GRUB bootloader"
+	exit
+#---------------------------------------------------------------
+
+#Set root password
+passwd
+
+#Set new user and give him root privileges
+useradd -mg users -G wheel {-s /bin/bash} username
+passwd username
+visudo
+	%wheel ALL=(ALL) ALL
+
+#Exit chroot
+exit
+
+#Unmount partitions
+umount -R /mnt
+
+#Boot to new system
+reboot

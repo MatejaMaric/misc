@@ -1,0 +1,4 @@
+grub-install --target=i386-pc --root-directory=/mnt --no-floppy --recheck --force /dev/sdb
+grub-install --target=x86_64-efi  --bootloader-id=GRUB --efi-directory=/boot/efi
+grug-install /dev/sdb
+grub-mkconfig -o /boot/grub/grub.cfg

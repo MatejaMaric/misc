@@ -1,0 +1,9 @@
+ip link set dev INTERFACE up
+
+ip address add ADDRESS/PREFIX_LAN broadcast + dev INTERFACE
+
+ip address add ADDRESS/PREFIX_LAN dev INTERFACE
+
+ip route add PREFIX via ADDRESS dev INTERFACE
+
+vi /etc/resolv.conf

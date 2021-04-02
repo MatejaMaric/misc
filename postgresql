@@ -1,0 +1,50 @@
+pacman -S postgresql
+chmod postgres:postgres /var/lib/postgres
+
+sudo -iu postgres
+initdb -D /var/lib/postgres/data
+
+vim data/pg_hba.conf
+vim data/postgresql.conf
+
+'''
+exit
+systemd restart postgres
+sudo -iu postgres
+'''
+
+createuser user_name
+createdb -O db_owner db_name
+psql db_name db_user
+
+\du
+\l
+\c db
+\dt
+\q
+
+
+End everything with ;
+
+CREATE DATABASE d
+USE d
+DROP DATABASE d
+CREATE TABLE t(...) 
+DROP TABLE t
+TRUNCATE TABLE t
+
+INSERT INTO t VALUES(...)
+SELECT ... FROM t [WHERE ...]
+UPDATE t SET ... WHERE ...
+DELETE FROM t WHERE ...
+
+ALTER DATABASE name RENAME TO new_name
+ALTER DATABASE name OWNER TO new_owner
+
+ALTER TABLE name RENAME TO new_name
+ALTER TABLE name SET SCHEMA new_schema
+
+SQL DDL (Date Definition Language) - create, alter, drop, rename, truncate, comment
+SQL DQL (Date Query Language) - select
+SQL DML (Date Manipulation Language) - insert, update, delete, merge, call, explain plan, lock table
+SQL DCL (Date Control Language) - grant, revoke

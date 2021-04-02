@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+#grub> set root=(usb0)
+#grub> linux /parabola/boot/x86_64/vmlinuz append parabolaisobasedir=parabola parabolaisolabel=PARA_202001
+#grub> initrd /parabola/boot/x86_64/parabolaiso.img
+#grub> boot
+#
+#AUTOMATIC ISOLINUX RECOGNISED
+
+#Check internet
+ping parabola.nu
+
+#pacman
+vim /etc/pacman.conf
+vim /etc/pacman.d/mirrorlist
+
+#Update keys
+pacman -Sy archlinux-keyring archlinuxarm-keyring parabola-keyring
+pacman-key --refresh-keys
+
+#Format hard drive
+#Three partition needed: root home swap
+fdisk -l
+#wipefs --all /dev/sda
+fdisk /dev/sda
+
+#Format partitions
+mkfs.ext4 /dev/sdaX
+mkfs.ext4 /dev/sdaY
+
+#Set swap
+mkswap /dev/sdaZ
+swapon /dev/sdaZ
+
+#Mount partitions
+mount /dev/sdaX /mnt
+mkdir /mnt/home
+mount /dev/sdaY /mnt/home
+
+#Set time if necessary
+date MMDDhhmmYYYY.ss
+
+#Install system
+pacstrap /mnt base elogind
+pacstrap /mnt base-devel syslog-ng #don't accept systemd
+pacstrap /mnt linux-libre linux-libre-lts linux-libre-fireware
+pacstrap /mnt parabola-base
+pacstrap /mnt networkmanager
+pacstrap /mnt grub
+#pacstrap /mnt openrc-init eudev
+#pacstrap /mnt openrc-base
+
+#Generate fstab file
+genfstab -U /mnt >> /mnt/etc/fstab
+
+#Chroot to newly build system
+arch-chroot /mnt {/bin/bash}
+
+#Set timezone
+ln -sf /usr/share/zoneinfo/Region/City /etc/localtime
+hwclock --systohc
+
+#Generate locale
+sed -i "s/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/" /etc/locale.gen
+locale-gen
+
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+#Set hostname
+echo "hostname=\"myhostname\"" > /etc/conf.d/hostname
+
+#Network configuration
+cat > /etc/hosts << EOF
+127.0.0.1	localhost
+::1		localhost
+127.0.1.1	myhostname.localdomain	myhostname
+EOF
+
+rc-update add NetworkManager default
+
+#YOU WILL NEED TO REMOVE LINUX KERNAL AND MKINITCPIO PRESETS AND THEN REINSTALL KERNAL - EMPTY MKINITCPIO PRESET
+#Generate boot disk
+mkinitcpio -p linux-libre-lts
+
+#Install bootloader
+grub-install /dev/sda
+grub-mkconfig -o /boot/grub/grub.cfg
+
+#Set root password
+passwd
+
+#Set new user and give him root privileges
+useradd -mg users -G wheel {-s /bin/bash} username
+passwd username
+visudo
+	%wheel ALL=(ALL) ALL
+
+#Exit chroot
+exit
+
+#Unmount partitions
+umount -R /mnt
+
+#Boot to new system
+reboot
+
+#--------------------------------------------------------------------------------
+#buzzing
+sudo su
+pacman -S powertop
+echo > /etc/init.d/powertop << EOF
+#!/sbin/openrc-run
+name="PowerTop"
+description="Fix your buzzing problem..."
+
+start () {
+	/usr/bin/powertop --quiet --auto-tune > /dev/null
+}
+#No need for stop() since powertop isn't a deamon
+EOF
+
+#INTERNET
+nmtui [OR]
+nmcli device wifi list
+nmcli device wifi connect SSID password PASSWORD
+
+#NTP
+pacman -S ntp
+rc-service ntp-client start
+hwclock --systohc

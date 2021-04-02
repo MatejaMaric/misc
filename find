@@ -1,0 +1,2 @@
+# Find files by file ext and sort them by date and time:
+sudo find . -name *.ods -printf "%AD %AT %p\n" | sort -k1.8n -k1.1nr -k1

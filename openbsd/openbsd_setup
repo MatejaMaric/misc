@@ -1,0 +1,64 @@
+#!/bin/sh
+
+ifconfig
+
+ifconfig athn0 nwid YOUR_SSID wpakey YOUR_PASSWORD
+dhclient athn0
+
+cat > /etc/hostname.athn0 << EOF
+nwid YOUR_SSID wpakey YOUR_PASSWORD
+dhcp
+EOF
+
+sh /etc/netstart athn0
+
+cat > /etc/wsconsctl.cong << EOF
+keyboard.bell.volume=0
+keyboard.map+="keysym Caps_Lock = Escape"
+EOF
+
+cat ~/.xsession << EOF
+xset b off
+setxkbmap -option caps:swapescape
+exec /usr/local/bin/i3
+EOF
+
+comment_out /etc/X11/xenodm/Xsetup_0
+
+rcctl set apmd status on
+rcctl set apmd flags -A
+
+rcctl set smtpd status off
+
+sysctl hw.disknames
+disklabel sd1
+mount -t msdos /dev/sd1i /mnt
+umount /mnt
+
+fw_update
+
+#usermod -G staff USER_NAME
+#/etc/login.conf staff:maxproc
+
+echo 'permit persist keepenv USER_NAME' > /etc/doas.conf
+
+/etc/X11/xenodm/GiveConsole
+
+sndioctl output.level=+0.05
+sndioctl output.mute=!
+
+killall -USR1 i3status
+
+https://www.openbsd.org/anoncvs.html
+---
+cd /usr
+cvs -qd anoncvs@anoncvs.ca.openbsd.org:/cvs checkout -rOPENBSD_6_7 -P src
+
+BIOS=======================
+git clone https://git.seabios.org/seabios.git
+Build without cbfs support
+https://g00se.org/2016/11/seabios-on-libreboot.html
+
+https://github.com/librecore-org/librecore/wiki/Chainloading-SeaBIOS-from-a-GRUB-payload
+https://github.com/bibanon/Coreboot-ThinkPads/blob/master/Libreboot-Mods/Libreboot-GRUB2.md
+==========================

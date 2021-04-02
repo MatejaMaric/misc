@@ -1,0 +1,8 @@
+# TTF to SVG
+http://fontello.com/
+https://icomoon.io/
+FontForge Open Source Font Editor
+# Optimize SVG
+svgcleaner
+scour -i input.svg -o output.svg
+scour -i input.svg -o output.svg --enable-viewboxing
