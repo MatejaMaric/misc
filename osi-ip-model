@@ -1,0 +1,25 @@
+OSI model:
+7.  Application layer           smtp, http, ssh
+6.  Presentation layer          encryption, compression, data formating
+5.  Session layer               Sockets(tcp,ip,port)? Start, stop session (data transfer), still no tcp (net socket init)?
+4.  Transport layer             tcp/udp
+3.  Network layer               ip, routing
+2.  Data link layer             mac, switch
+1.  Physical layer              cable, nic, hub
+
+Network Interface Card and cables                                       1PHYSICAL
+Frame header   |                                    | frame footer      2DATA LINK      frame
+               | ip header | ip date                |                   3INTERNET       packet
+                           | tcp header | tcp data  |                   4TRANSPORT      segment
+                                        | app data  |                   5APP
+
+APP -> OSI app, presentation, session
+
+
+
+Internet protocol suite (TCP/IP model):
+
+Frame header   |                                    | frame footer      1LINK
+               | ip header | ip date                |                   2INTERNET
+                           | tcp header | tcp data  |                   3TRANSPORT
+                                        | app data  |                   4APP
