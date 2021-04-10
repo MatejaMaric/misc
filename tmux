@@ -18,8 +18,8 @@ Ctrl+b c Create a new window (with shell)
 
 Ctrl+b w Choose window from a list
 Ctrl+b 0 Switch to window 0 (by number )
-Ctrl+n   Switch to next window
-Ctrl+p   Switch to previous window
+Ctrl+b n Switch to next window
+Ctrl+b p Switch to previous window
 
 Ctrl+b , Rename the current window
 

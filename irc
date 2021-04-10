@@ -1,18 +1,23 @@
 # irssi
 /set nick yourNick
-/connect chat.freenode.net
+/connect -tls chat.freenode.net
 /join #channelname
 
 # private msg
 /msg user text
 
 # to mention someone, just use their nick
+
+# search channels
 /msg alis LIST *searchterm*
 
 # https://lug.oregonstate.edu/blog/irc-and-ssl/
 /server add -ssl_verify chat.freenode.net 6697
 
-/connect -tls chat.freenode.net
-
 /connect -tls chat.freenode.net ACCOUNT:PASSWORD
 /msg NickServ identify PASSWORD
+
+# auto login to freenode
+/network add -sasl_username <login> -sasl_password <password> -sasl_mechanism PLAIN freenode
+/server add -auto -net freenode -ssl -ssl_verify chat.freenode.net 6697
+/save
