@@ -7,6 +7,9 @@ git branch --set-upstream-to=origin/master master
 
 git branch new-branch
 git switch new-branch
+
+git checkout -b new-branch
+
 git switch master
 git merge new-branch
 
