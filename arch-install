@@ -43,7 +43,7 @@ mount /dev/sdaX /mnt
 mkdir /mnt/home
 mount /dev/sdaY /mnt/home
 mkdir -p /mnt/boot/efi
-mount /dev/sdaW mnt/boot/efi
+mount /dev/sdaW /mnt/boot/efi
 
 #Install system
 pacstrap /mnt base base-devel linux linux-firmware
