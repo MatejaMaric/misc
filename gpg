@@ -1,5 +1,6 @@
 gpg -k
 gpg -K
+gpg --list-secret-keys --keyid-format=long
 
 gpg --verify gnupg-2.2.21.tar.bz2.sig gnupg-2.2.21.tar.bz2
 
